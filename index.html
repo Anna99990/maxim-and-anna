@@ -201,88 +201,105 @@ alt='' imgfield='tn_img_1785069731099000002'
 window.tildastatcookie='no';setTimeout(function(){(function(d,w,k,o,g) {var n=d.getElementsByTagName(o)[0],s=d.createElement(o),f=function(){n.parentNode.insertBefore(s,n);};s.type="text/javascript";s.async=true;s.key=k;s.id="tildastatscript";s.src=g;if(w.opera=="[object Opera]") {d.addEventListener("DOMContentLoaded",f,false);} else {f();}})(document,window,'2e6676ba5e969734067626aa2e7364ea','script','js/tilda-stat-1.0.min.js');},2000);</script> <script src="js/custom-form-sender.js"></script> <script>
 document.addEventListener('click', function(e) {
     const submitBtn = e.target.closest('.t-submit') || e.target.closest('button[type="submit"]');
-    if (submitBtn) {
-        const form = submitBtn.closest('.t-form') || submitBtn.closest('form');
-        if (form) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
+    if (!submitBtn) return;
+    
+    // Find the actual <form> element. Tilda sometimes uses div.t-form wrapper.
+    let formEl = submitBtn.closest('form');
+    if (!formEl) {
+        const container = submitBtn.closest('.tn-elem') || document;
+        formEl = container.querySelector('form') || document.querySelector('form');
+    }
+    
+    if (formEl) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
 
-            const formData = new FormData(form);
-            
-            // Basic validation
-            let isEmpty = true;
-            for (let [key, value] of formData.entries()) {
-                if (key !== 'formservices[]' && key !== 'tildaspec-formname' && value.trim() !== '') {
-                    isEmpty = false;
-                }
-            }
-            if (isEmpty) {
-                alert("Пожалуйста, заполните форму перед отправкой.");
-                return;
-            }
-
-            const inputsDataEl = document.querySelector('.tn-atom__inputs-data');
-            let titles = {};
-            if (inputsDataEl) {
-                try {
-                    const inputsData = JSON.parse(inputsDataEl.getAttribute('data-value'));
-                    inputsData.forEach(item => {
-                        titles[item.li_nm] = item.li_title || item.li_nm;
-                    });
-                } catch (err) {}
-            }
-
-            let message = "🎉 Новая анкета (Максим и Анна):\\n\\n";
-            for (let [key, value] of formData.entries()) {
-                if (key === 'formservices[]' || key === 'tildaspec-formname') continue;
-                let title = titles[key] || key;
-                message += `🔹 ${title}:\\n${value}\\n\\n`;
-            }
-
-            const botToken = "8615039987:AAGOvrFohHpEI2sw65HOd2dFlFVjoB6_Suw";
-            const chatId = "7792139795";
-            const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-
-            let originalText = submitBtn.textContent || submitBtn.value;
-            if (submitBtn.tagName === 'INPUT') submitBtn.value = "Отправка...";
-            else submitBtn.textContent = "Отправка...";
-            submitBtn.style.opacity = "0.7";
-            submitBtn.style.pointerEvents = "none";
-
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    text: message
-                })
-            }).then(response => {
-                if (response.ok) {
-                    const successBox = form.querySelector('.t-form__successbox');
-                    const errorBox = form.querySelector('.t-form__errorbox-wrapper');
-                    if (errorBox) errorBox.style.display = 'none';
-                    
-                    if (successBox) {
-                        successBox.style.display = 'block';
-                        successBox.innerHTML = '<div class="t-form__successbox-text">Спасибо! Ждем вас на свадьбе! ❤️</div>';
-                    } else {
-                        alert('Спасибо! Ваши ответы успешно отправлены. Ждем вас на свадьбе! ❤️');
+        // 1. Gather inputs safely
+        const inputs = formEl.querySelectorAll('input, textarea, select');
+        let dataMap = {};
+        inputs.forEach(input => {
+            if (input.name && input.name !== 'formservices[]' && input.name !== 'tildaspec-formname') {
+                if (input.type === 'radio' || input.type === 'checkbox') {
+                    if (input.checked) {
+                        dataMap[input.name] = input.value;
                     }
-                    form.reset();
                 } else {
-                    alert('Произошла ошибка при отправке. Пожалуйста, попробуйте еще раз.');
+                    if (input.value.trim() !== '') {
+                        dataMap[input.name] = input.value;
+                    }
                 }
-            }).catch(error => {
-                alert('Ошибка сети. Проверьте подключение к интернету и попробуйте еще раз.');
-            }).finally(() => {
-                if (submitBtn.tagName === 'INPUT') submitBtn.value = originalText;
-                else submitBtn.textContent = originalText;
-                submitBtn.style.opacity = "1";
-                submitBtn.style.pointerEvents = "auto";
-            });
+            }
+        });
+
+        // 2. Map names to titles safely
+        let titles = {};
+        const inputsDataEl = document.querySelector('.tn-atom__inputs-textarea') || document.querySelector('.tn-atom__inputs-data');
+        if (inputsDataEl) {
+            try {
+                const jsonText = inputsDataEl.value || inputsDataEl.textContent || inputsDataEl.getAttribute('data-value');
+                if (jsonText) {
+                    const inputsData = JSON.parse(jsonText);
+                    inputsData.forEach(item => {
+                        if (item.li_nm) titles[item.li_nm] = item.li_title || item.li_nm;
+                        if (item.li_name) titles[item.li_name] = item.li_title || item.li_nm;
+                    });
+                }
+            } catch (err) {}
         }
+
+        let message = "🎉 Новая анкета (Максим и Анна):\\n\\n";
+        for (let key in dataMap) {
+            let title = titles[key] || key;
+            message += `🔹 ${title}:\\n${dataMap[key]}\\n\\n`;
+        }
+
+        if (Object.keys(dataMap).length === 0) {
+            message += "(Форма отправлена пустой)\\n";
+        }
+
+        const botToken = "8615039987:AAGOvrFohHpEI2sw65HOd2dFlFVjoB6_Suw";
+        const chatId = "7792139795";
+        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+        let originalText = submitBtn.textContent || submitBtn.value || "ОТПРАВИТЬ";
+        if (submitBtn.tagName === 'INPUT') submitBtn.value = "Отправка...";
+        else submitBtn.textContent = "Отправка...";
+        submitBtn.style.opacity = "0.7";
+        submitBtn.style.pointerEvents = "none";
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: message
+            })
+        }).then(response => {
+            if (response.ok) {
+                const successBox = formEl.querySelector('.t-form__successbox') || document.querySelector('.t-form__successbox');
+                const errorBox = formEl.querySelector('.t-form__errorbox-wrapper') || document.querySelector('.t-form__errorbox-wrapper');
+                if (errorBox) errorBox.style.display = 'none';
+                
+                if (successBox) {
+                    successBox.style.display = 'block';
+                    successBox.innerHTML = '<div class="t-form__successbox-text" style="color:green; font-weight:bold; font-size: 20px;">Спасибо! Ждем вас на свадьбе! ❤️</div>';
+                } else {
+                    alert('Спасибо! Ваши ответы успешно отправлены. Ждем вас на свадьбе! ❤️');
+                }
+                formEl.reset();
+            } else {
+                alert('Произошла ошибка при отправке. Пожалуйста, попробуйте еще раз.');
+            }
+        }).catch(error => {
+            alert('Ошибка сети. Проверьте подключение к интернету и попробуйте еще раз.');
+        }).finally(() => {
+            if (submitBtn.tagName === 'INPUT') submitBtn.value = originalText;
+            else submitBtn.textContent = originalText;
+            submitBtn.style.opacity = "1";
+            submitBtn.style.pointerEvents = "auto";
+        });
     }
 }, true);
 </script>

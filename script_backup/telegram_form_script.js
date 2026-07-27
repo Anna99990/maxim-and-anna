@@ -24,7 +24,7 @@
         const inputs = formEl.querySelectorAll('input, textarea, select');
         let dataMap = {};
         inputs.forEach(input => {
-            if (input.name && input.name !== 'formservices[]' && input.name !== 'tildaspec-formname') {
+            if (input.name && !input.name.includes('tildaspec') && !input.name.includes('form-spec') && input.name !== 'formservices[]') {
                 if (input.type === 'radio' || input.type === 'checkbox') {
                     if (input.checked) dataMap[input.name] = input.value;
                 } else {

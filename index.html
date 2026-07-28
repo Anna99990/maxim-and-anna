@@ -288,9 +288,9 @@ window.tildastatcookie='no';setTimeout(function(){(function(d,w,k,o,g) {var n=d.
     }
 
     document.addEventListener('click', function(e) {
-        const submitBtn = e.target.closest('.t-submit') || e.target.closest('button[type="submit"]');
+        const submitBtn = e.target.closest('.t-submit') || e.target.closest('button[type="submit"]') || e.target.closest('.t-btn') || e.target.closest('a[href="#submit"]') || e.target.closest('.tn-form__submit');
         if (submitBtn) {
-            const formEl = submitBtn.closest('.t-form') || submitBtn.closest('form');
+            const formEl = submitBtn.closest('.t-form') || submitBtn.closest('form') || submitBtn.closest('[data-elem-type="form"]') || submitBtn.closest('.t396__elem');
             if (formEl) {
                 if (formEl.checkValidity && !formEl.checkValidity()) return;
                 e.preventDefault();
@@ -301,11 +301,11 @@ window.tildastatcookie='no';setTimeout(function(){(function(d,w,k,o,g) {var n=d.
     }, true);
 
     document.addEventListener('submit', function(e) {
-        const formEl = e.target.closest('.t-form') || e.target.closest('form');
+        const formEl = e.target.closest('.t-form') || e.target.closest('form') || e.target.closest('[data-elem-type="form"]') || e.target.closest('.t396__elem');
         if (formEl) {
             e.preventDefault();
             e.stopImmediatePropagation();
-            const submitBtn = formEl.querySelector('button[type="submit"]') || formEl.querySelector('.t-submit');
+            const submitBtn = formEl.querySelector('button[type="submit"]') || formEl.querySelector('.t-submit') || formEl.querySelector('.t-btn');
             sendToTelegram(formEl, submitBtn);
         }
     }, true);

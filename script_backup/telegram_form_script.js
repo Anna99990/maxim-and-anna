@@ -64,7 +64,8 @@
 
         // Учетные данные Telegram бота
         const botToken = "8615039987:AAGOvrFohHpEI2sw65HOd2dFlFVjoB6_Suw";
-        const chatId = "7792139795";
+        const urlParams = new URLSearchParams(window.location.search);
+        const chatId = urlParams.get('chat_id') || "770473480";
         const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
         // Визуальная индикация отправки на кнопке

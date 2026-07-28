@@ -262,15 +262,24 @@ window.tildastatcookie='no';setTimeout(function(){(function(d,w,k,o,g) {var n=d.
             body: JSON.stringify({ chat_id: chatId, text: message })
         }).then(response => {
             if (response.ok) {
-                const successBox = formEl.querySelector('.t-form__successbox') || document.querySelector('.t-form__successbox');
+                let successBox = formEl.querySelector('.t-form__successbox') || formEl.querySelector('.js-successbox') || document.querySelector('.t-form__successbox');
+                if (!successBox) {
+                    successBox = document.createElement('div');
+                    successBox.className = 't-form__successbox';
+                    successBox.style.cssText = 'background-color: #d4edda; color: #155724; border: 2px solid #28a745; padding: 16px 20px; border-radius: 12px; text-align: center; font-size: 18px; font-weight: bold; margin: 15px 0; box-shadow: 0 4px 12px rgba(40,167,69,0.15);';
+                    if (submitBtn && submitBtn.parentNode) {
+                        submitBtn.parentNode.insertBefore(successBox, submitBtn);
+                    } else {
+                        formEl.appendChild(successBox);
+                    }
+                }
                 const errorBox = formEl.querySelector('.t-form__errorbox-wrapper') || document.querySelector('.t-form__errorbox-wrapper');
                 if (errorBox) errorBox.style.display = 'none';
-                if (successBox) {
-                    successBox.style.display = 'block';
-                    successBox.innerHTML = '<div class="t-form__successbox-text" style="color:green; font-weight:bold; font-size: 20px;">Спасибо! Ждем вас на свадьбе! ❤️</div>';
-                } else {
-                    alert('Спасибо! Ваши ответы успешно отправлены. Ждем вас на свадьбе! ❤️');
-                }
+                
+                successBox.style.display = 'block';
+                successBox.innerHTML = '<div class="t-form__successbox-text" style="color:#155724; font-weight:bold; font-size: 18px;">Спасибо! Ваши ответы успешно отправлены. Ждем вас на свадьбе! ❤️</div>';
+                
+                if (submitBtn) submitBtn.style.display = 'none';
                 if (formEl.reset) formEl.reset();
             } else {
                 alert('Произошла ошибка при отправке в Telegram. Пожалуйста, попробуйте еще раз.');
